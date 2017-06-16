@@ -6,9 +6,14 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cavariux.twitchirc.Core.TwitchBot;
 import com.cavariux.twitchirc.Json.JsonArray;
@@ -26,6 +31,7 @@ public class Channel {
 	private String channel;
 	private TwitchBot bot;
 	private static HashMap<String, Channel> channels = new HashMap<String, Channel>();
+	private static Logger log = LoggerFactory.getLogger("Channel");
 	
 	public static List<Channel> getChannels() {
 		return new ArrayList<Channel>(channels.values()); 
@@ -444,5 +450,33 @@ public class Channel {
 		} catch (IOException ex) {
 			return false;
 		}
+	}
+	
+	/**
+	 * Get the start time of the stream, so highlighting can mark the correct timestamp for the video
+	 * @param channel the channel to check
+	 * @return Returns the GoLive start time, as Long
+	 */
+	public static final Long getGoLiveStart(Channel channel, TwitchBot bot) {
+		Long startLong = (long) 0;
+		String createdAt = null;
+		try {
+			URL url = new URL("https://api.twitch.tv/kraken/streams/" + channel.toString().substring(1));
+			URLConnection conn = url.openConnection();
+			conn.setRequestProperty("Client-ID", bot.getClientID());
+	        BufferedReader br = new BufferedReader( new InputStreamReader( conn.getInputStream() ));
+	        JsonObject jsonObj = JsonObject.readFrom(br.readLine());
+	        JsonObject stream = (JsonObject) jsonObj.get("stream");
+	        createdAt = stream.get("created_at").toString();
+	        SimpleDateFormat f = new SimpleDateFormat("yyyy-mm-dd'T' HH:mm:ss'Z'");
+	        startLong = f.parse(createdAt).getTime();
+		} catch (ParseException ex) {
+			log.info("Parse error trying to convert " + channel + " Stream Start Date " + createdAt + " to Long for calcing timestamp");
+			log.debug(ex.getStackTrace().toString());
+		} catch (IOException ex) {
+			log.info ("IO Exception accessing " + channel + " stream object - " + ex.getMessage());
+			log.debug(ex.getStackTrace().toString());
+		}
+		return startLong;
 	}
 }
