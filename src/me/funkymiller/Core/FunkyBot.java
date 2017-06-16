@@ -28,7 +28,6 @@ public class FunkyBot extends TwitchBot {
 	private static String botClientID;
 	
 	//Twitch Server and Channel
-	private static String botHost;
 	private static String botChannel;
 	
 	//Command message indicator
@@ -55,7 +54,6 @@ public class FunkyBot extends TwitchBot {
 		botClientID = loadedConfig.getProperty("bot_clientid");
 		
 		//Set the twitch server and channel
-		botHost = loadedConfig.getProperty("twitch_host");
 		botChannel = loadedConfig.getProperty("autojoin_channel");
 		//prefix channel with # if they didnt include it
 		if (!(botChannel.startsWith("#"))) {
@@ -120,7 +118,7 @@ public class FunkyBot extends TwitchBot {
 			}
 			if (msgReply.getType().equalsIgnoreCase("M") && msgReply.getContent().length() > 0) {
 				this.sendMessage(msgReply.getContent(), channel);
-				log.debug("sent message '" + msgReply.getContent() + "' to channel '" + channel.toString() + "'");
+				log.debug("sent message '" + msgReply.getContent() + "' to channel '" + channel + "'");
 				return;
 			}
 			//They tried to do a command, for better or for worse, so no points for it
