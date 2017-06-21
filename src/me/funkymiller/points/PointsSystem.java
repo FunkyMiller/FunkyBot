@@ -8,15 +8,20 @@ import org.slf4j.LoggerFactory;
 import com.cavariux.twitchirc.Chat.Channel;
 import com.cavariux.twitchirc.Chat.User;
 
+import me.funkymiller.Core.FunkyBot;
+
 public class PointsSystem {
+	private boolean pointsOn = false;
 	private HashMap<User,Integer> pointsMap;
+	private FunkyBot bot;
 	private Logger log;
 	private Integer ptsForMessage = 0;
 	private Integer ptsForSub = 0;
 	private Integer ptsForDonation = 0;
 	private Integer ptsForBits = 0;
 	
-	public PointsSystem() {
+	public PointsSystem(FunkyBot botIn) {
+		bot = botIn;
 		log = LoggerFactory.getLogger(getClass());
 		loadPoints();
 	}
@@ -60,5 +65,17 @@ public class PointsSystem {
 	
 	public void savePoints() {
 		
+	}
+	
+	public void setPointsOn(boolean state) {
+		pointsOn = state;
+	}
+	
+	public void setPointsOn(String state) {
+		pointsOn = state.equalsIgnoreCase("true");
+	}
+	
+	public boolean getPointsOn() {
+		return pointsOn;
 	}
 }

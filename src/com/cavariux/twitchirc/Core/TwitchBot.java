@@ -292,8 +292,7 @@ public class TwitchBot {
 			        System.out.println("< PONG " + line.substring(5));
 			        this.writer.write("PONG " + line.substring(5) + "\r\n");
 			        this.writer.flush();
-			    } else if (line.contains("PRIVMSG"))
-			    {
+			    } else if (line.contains("PRIVMSG")) {
 			        String str[];
 			        str = line.split("!");
 			        final User msg_user = User.getUser(str[0].substring(1, str[0].length()));
@@ -302,10 +301,11 @@ public class TwitchBot {
 			        msg_channel = Channel.getChannel(str[2], this);
 			        String msg_msg = line.substring((str[0].length() + str[1].length() + str[2].length() + 4), line.length());
 			        System.out.println("> " + msg_channel + " | " + msg_user + " >> " +  msg_msg);
-			        if (msg_msg.startsWith(commandTrigger))
+			        if (msg_msg.startsWith(commandTrigger)) {
 			        	onCommand(msg_user, msg_channel, msg_msg.substring(1));
-			        
-			        onMessage(msg_user, msg_channel, msg_msg);
+			        } else {
+			        	onMessage(msg_user, msg_channel, msg_msg);
+			        }
 			    } else if (line.contains(" JOIN ")) {
 			    	String[] p = line.split(" ");
 			    	String[] pd = line.split("!");

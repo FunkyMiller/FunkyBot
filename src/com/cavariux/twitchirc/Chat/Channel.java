@@ -479,4 +479,18 @@ public class Channel {
 		}
 		return startLong;
 	}
+	
+	/**
+	 * Check if the user is the caster
+	 * @param user The user
+	 * @return true : false
+	 */
+	@SuppressWarnings("deprecation")
+	public final boolean isCaster(User user) {
+		if (this.toString().startsWith("#")) {
+			return user.toString().equalsIgnoreCase(this.toString().substring(1));
+		} else {
+			return user.toString().equalsIgnoreCase(this.toString());
+		}
+	}
 }

@@ -111,4 +111,8 @@ public class User
 	{
 		return channel.isSubscribed(this, oauth_token);
 	}
+	
+	public final boolean isCaster(Channel channel) {
+		return channel.isCaster(this);
+	}
 }

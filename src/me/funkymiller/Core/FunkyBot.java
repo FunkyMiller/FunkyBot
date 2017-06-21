@@ -9,6 +9,7 @@ import com.cavariux.twitchirc.Chat.Channel;
 import com.cavariux.twitchirc.Chat.User;
 import com.cavariux.twitchirc.Core.TwitchBot;
 
+import me.funkymiller.highlighting.HighlightSystem;
 import me.funkymiller.messaging.Message;
 import me.funkymiller.points.PointsSystem;
 
@@ -30,9 +31,13 @@ public class FunkyBot extends TwitchBot {
 	//Twitch Server and Channel
 	private static String botChannel;
 	
+	//Sub systems
+	private MessageSystem messageSys;
+	private HighlightSystem highSys;
+	private PointsSystem pointsSys;
+	
 	//Command message indicator
 	private static String cmdIndicator;
-	private static MessageSystem messageSystem;
 	
 	//Points System
 	private static PointsSystem pointsSystem;
@@ -62,18 +67,25 @@ public class FunkyBot extends TwitchBot {
 		
 		//get the command message indicator
 		cmdIndicator = loadedConfig.getProperty("command_message_prefix");
-		
-		//Create Message System
-		messageSystem = new MessageSystem(cmdIndicator);
-		messageSystem.setHighlights(loadedConfig.getProperty("highlights_enabled"));
-		messageSystem.setHighlightsLevel(loadedConfig.getProperty("highlights_level"));
-		messageSystem.setOauthToken(botOauth);
-		
-		//Create Points System
-		pointsSystem = null;
-		if (loadedConfig.getProperty("points_enabled") == "true") {
-			pointsSystem = new PointsSystem();
+		if (cmdIndicator == null || cmdIndicator.length() == 0) {
+			this.setCommandTrigger("!");
+		} else {
+			this.setCommandTrigger(cmdIndicator);
 		}
+		
+		//Create the Sub Systems
+		messageSys = new MessageSystem(this);
+		highSys = new HighlightSystem(this);
+		pointsSys = new PointsSystem(this);
+		
+		//Config the Message System
+		
+		//Config the highlight system
+		highSys.setHighlights(loadedConfig.getProperty("highlights_enabled"));
+		highSys.setHighlightsLevel(loadedConfig.getProperty("highlights_level"));
+		
+		//Config the Points System
+		pointsSys.setPointsOn(loadedConfig.getProperty("points_enabled").equalsIgnoreCase("true"));
 		
 		//pass the settings in to the bot
 		this.setUsername(botName);
@@ -105,30 +117,53 @@ public class FunkyBot extends TwitchBot {
 	
 	@Override
 	public void onMessage(User user, Channel channel, String message) {
-		Message msgReply = null;; 
-		//if message starts with a command indicator, do shit
-		if (message.startsWith(cmdIndicator)) {
-			log.debug("Processing command '" + message + "' from user '" + user + "' who " + (channel.isMod(user) ? " is " : " isnt") + " mod" );
-			msgReply = messageSystem.doCommand(channel, message, user);
-			//Send the reply if there is one, and it is a whisper
-			if (msgReply.getType().equalsIgnoreCase("W") && msgReply.getContent().length() > 0) {
-				this.whisper(user,  msgReply.getContent());
-				log.debug("sent whisper to '" + user + "' saying '" + msgReply.getContent() + "'");
-				return;
-			}
-			if (msgReply.getType().equalsIgnoreCase("M") && msgReply.getContent().length() > 0) {
-				this.sendMessage(msgReply.getContent(), channel);
-				log.debug("sent message '" + msgReply.getContent() + "' to channel '" + channel + "'");
-				return;
-			}
-			//They tried to do a command, for better or for worse, so no points for it
-		} else {
-			//Give them points if the points system is enabled
-			if ((!(pointsSystem == null)) && channel.isLive()) {
-				pointsSystem.givePoints(channel, user, "message");
-			}
+		//This is a simple message, not a command. Give them points if enabled.
+		if ((!(pointsSystem == null)) && channel.isLive()) {
+			pointsSystem.givePoints(channel, user, "message");
 		}
+	}
+	
+	@Override
+	public void onCommand(User user, Channel channel, String message) {
+		Message msgReply = null;
+		log.debug("Processing command '" + message + "' from user '" + user + "' who " + (channel.isMod(user) ? " is " : " isnt") + " mod" );
 		
+		//run the message through the Message System
+		msgReply = messageSys.doCommand(channel, message, user);
+		
+		//Send the reply message or whisper
+		if (msgReply.getType().equalsIgnoreCase("W") && msgReply.getContent().length() > 0) {
+			this.whisper(user,  msgReply.getContent());
+			log.debug("sent whisper to '" + user + "' saying '" + msgReply.getContent() + "'");
+			return;
+		}
+		if (msgReply.getType().equalsIgnoreCase("M") && msgReply.getContent().length() > 0) {
+			this.sendMessage(msgReply.getContent(), channel);
+			log.debug("sent message '" + msgReply.getContent() + "' to channel '" + channel + "'");
+			return;
+		}
+	}
+	
+	@Override
+	public void userJoins(User user, Channel channel) {
+		
+	}
+
+	
+	public MessageSystem getMessageSystem() {
+		return messageSys;
+	}
+	
+	public HighlightSystem getHighlightSystem() {
+		return highSys;
+	}
+	
+	public PointsSystem getPointsSystem() {
+		return pointsSys;
+	}
+	
+	public String getOauth() {
+		return botOauth;
 	}
 	
 }
